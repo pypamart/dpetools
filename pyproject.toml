@@ -7,7 +7,9 @@ authors = [
     { name = "Pierre-Yves PAMART", email = "pypamart@gmail.com" }
 ]
 requires-python = ">=3.13"
-dependencies = []
+dependencies = [
+    "requests>=2.32.3",
+]
 
 [build-system]
 requires = ["hatchling"]
