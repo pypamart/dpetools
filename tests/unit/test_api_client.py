@@ -77,3 +77,18 @@ def test_should_raise_error_when_fetching_dpe_records_fails(dpe_api_client: DPEA
         dpe_api_client.fetch_dpe_records()
     
     assert "Failed to fetch data" in str(exc_info.value)
+  
+# Timeout  
+@pytest.mark.sad
+def test_should_raise_timeout_error_when_api_request_times_out(dpe_api_client: DPEApiClient, monkeypatch):
+    # Arrange
+    # Mock the requests.get method to raise a Timeout exception
+    monkeypatch.setattr(
+        "requests.get",
+        lambda *args, **kwargs: (_ for _ in ()).throw(requests.Timeout),
+    )
+    # Act & Assert
+    with pytest.raises(DPEApiClientException) as exc_info:
+        dpe_api_client.fetch_dpe_records()
+    
+    assert "An error occurred while fetching data" in str(exc_info.value)
