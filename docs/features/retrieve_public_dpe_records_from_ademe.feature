@@ -6,6 +6,7 @@ Feature: Query DPE data without specifying query parameters
 
   Rule: Retrieve DPE data using default API behavior
 
+    @happy
     Example: Get a list of DPE records with default query
       Given the ADEME DPE API is reachable at "https://data.ademe.fr/data-fair/api/v1/datasets/dpe03existant/lines"
       When I query the DPE data endpoint without specifying any parameters
@@ -15,6 +16,7 @@ Feature: Query DPE data without specifying query parameters
 
   Rule: Handle API unavailability
 
+    @sad
     Example: Gracefully handle API connectivity failure
       Given the ADEME DPE API is not reachable
       When I query the DPE data endpoint
