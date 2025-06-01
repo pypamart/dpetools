@@ -19,10 +19,12 @@ build-backend = "hatchling.build"
 [dependency-groups]
 dev = [
     "mypy>=1.16.0",
+    "pandas-stubs>=2.2.3.250527",
     "pytest>=8.3.5",
     "pytest-bdd>=8.1.0",
     "pytest-cov>=6.1.1",
     "ruff>=0.11.12",
+    "types-requests>=2.32.0.20250515",
 ]
 
 [tool.pytest.ini_options]
