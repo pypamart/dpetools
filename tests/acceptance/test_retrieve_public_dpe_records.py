@@ -1,9 +1,12 @@
+from typing import Dict
+
 import pytest
 from pytest_bdd import scenarios, given, when, then, parsers
 import pandas as pd
 
 from dpetools.api_client import DPEApiClient
 from dpetools.config.container import Container
+from dpetools.exceptions import DPEApiClientException
 
 # Link the .feature file
 scenarios('../../docs/features/retrieve_public_dpe_records_from_ademe.feature')
@@ -16,6 +19,13 @@ def dpe_api_client():
     """
     api_data_url = Container.api_data_url
     return DPEApiClient(api_data_url=api_data_url)
+
+@pytest.fixture
+def context() -> Dict[str, str]:
+    """
+    Fixture to provide a context dictionary for storing shared data between steps.
+    """
+    return {}
 
 # Steps for Rule: Retrieve DPE data using default API behavior
 
@@ -46,13 +56,31 @@ def check_field_present(dpe_records_dataframe, field):
 # Steps for Rule: Handle API unavailability
 
 @given("the ADEME DPE API is not reachable")
-def api_unreachable(monkeypatch, context): ...
+def api_unreachable(monkeypatch):
+    # Monkeypatch requests.get to always raise a RequestException
+    import requests
+    monkeypatch.setattr(
+        "requests.get",
+        lambda *args, **kwargs: (_ for _ in ()).throw(requests.RequestException("API connectivity error")),
+    )
 
 @when("I query the DPE data endpoint")
-def query_dpe_data_unreachable(context): ...
+def query_dpe_data_unreachable(dpe_api_client: DPEApiClient, context: Dict[str, str]):
+    
+    with pytest.raises(DPEApiClientException) as exc_info:
+        dpe_api_client.fetch_dpe_records()
+    
+    context["error"] = str(exc_info.value)
 
 @then("I should receive an error indicating the API is unavailable")
-def check_error_received(context): ...
+def check_error_received(context: Dict[str, str]):
+    assert context.get("error") is not None, "Expected an error but none was raised."
+    assert "unavailable" in context["error"].lower() or "error" in context["error"].lower() or "connectivity" in context["error"].lower(), f"Error message should indicate unavailability, got: {context['error']}"
 
 @then(parsers.parse('the error message should mention "{keyword}"'))
-def check_error_message(context, keyword): ...
+def check_error_message(context: Dict[str, str], keyword: str):
+    assert context.get("error") is not None, "No error message captured."
+    # Accept if any of the keywords (split by ' or ') are present in the error message
+    keywords = [keyword_item.strip('" ') for keyword_item in keyword.split('or')]
+    error_msg = context["error"].lower()
+    assert any(expected_keyword.lower() in error_msg for expected_keyword in keywords), f"Expected one of {keywords} in error message, got: {context['error']}"
