@@ -1,7 +1,7 @@
 """
 Module for interacting with the DPE API.
 """
-from typing import Dict, Any
+from typing import Any
 
 import pandas as pd
 import requests
@@ -28,7 +28,7 @@ class DPEApiClient:
         Raises:
             DPEApiClientException: If the API request fails or returns an error.
         """
-        params: Dict[str, Any] = {}
+        params: dict[str, Any] = {}
         try:
             response = requests.get(self.__api_endpoint,  timeout=self.__timeout, params=params)
 

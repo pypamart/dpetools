@@ -1,7 +1,6 @@
+import pandas as pd
 import pytest
 import requests
-
-import pandas as pd
 
 from dpetools.api_client import DPEApiClient
 from dpetools.config.container import Container

@@ -1,8 +1,7 @@
-from typing import Dict
 
-import pytest
-from pytest_bdd import scenarios, given, when, then, parsers
 import pandas as pd
+import pytest
+from pytest_bdd import given, parsers, scenarios, then, when
 
 from dpetools.api_client import DPEApiClient
 from dpetools.config.container import Container
@@ -21,7 +20,7 @@ def dpe_api_client():
     return DPEApiClient(api_data_url=api_data_url)
 
 @pytest.fixture
-def context() -> Dict[str, str]:
+def context() -> dict[str, str]:
     """
     Fixture to provide a context dictionary for storing shared data between steps.
     """
@@ -65,7 +64,7 @@ def api_unreachable(monkeypatch):
     )
 
 @when("I query the DPE data endpoint")
-def query_dpe_data_unreachable(dpe_api_client: DPEApiClient, context: Dict[str, str]):
+def query_dpe_data_unreachable(dpe_api_client: DPEApiClient, context: dict[str, str]):
     
     with pytest.raises(DPEApiClientException) as exc_info:
         dpe_api_client.fetch_dpe_records()
@@ -73,12 +72,12 @@ def query_dpe_data_unreachable(dpe_api_client: DPEApiClient, context: Dict[str, 
     context["error"] = str(exc_info.value)
 
 @then("I should receive an error indicating the API is unavailable")
-def check_error_received(context: Dict[str, str]):
+def check_error_received(context: dict[str, str]):
     assert context.get("error") is not None, "Expected an error but none was raised."
     assert "unavailable" in context["error"].lower() or "error" in context["error"].lower() or "connectivity" in context["error"].lower(), f"Error message should indicate unavailability, got: {context['error']}"
 
 @then(parsers.parse('the error message should mention "{keyword}"'))
-def check_error_message(context: Dict[str, str], keyword: str):
+def check_error_message(context: dict[str, str], keyword: str):
     assert context.get("error") is not None, "No error message captured."
     # Accept if any of the keywords (split by ' or ') are present in the error message
     keywords = [keyword_item.strip('" ') for keyword_item in keyword.split('or')]
