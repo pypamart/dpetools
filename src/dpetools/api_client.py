@@ -1,6 +1,7 @@
 """
 Module for interacting with the DPE API.
 """
+
 from typing import Any
 
 import pandas as pd
@@ -9,6 +10,7 @@ import requests
 from dpetools.exceptions import DPEApiClientException
 
 SUCCESS_STATUS_CODE = 200
+
 
 class DPEApiClient:
     """
@@ -25,13 +27,15 @@ class DPEApiClient:
 
         Returns:
             pd.DataFrame: A DataFrame containing the DPE records.
-            
+
         Raises:
             DPEApiClientException: If the API request fails or returns an error.
         """
         params: dict[str, Any] = {}
         try:
-            response = requests.get(self.__api_endpoint,  timeout=self.__timeout, params=params)
+            response = requests.get(
+                self.__api_endpoint, timeout=self.__timeout, params=params
+            )
 
             if response.status_code == SUCCESS_STATUS_CODE:
                 data = response.json()
@@ -42,7 +46,9 @@ class DPEApiClient:
                     f"Failed to fetch data: {response.status_code} - {response.text}"
                 )
         except requests.RequestException as e:
-            raise DPEApiClientException(f"An error occurred while fetching data: {str(e)}") from e
+            raise DPEApiClientException(
+                f"An error occurred while fetching data: {str(e)}"
+            ) from e
 
     def is_api_reachable(self) -> bool:
         """
