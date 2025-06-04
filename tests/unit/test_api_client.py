@@ -17,8 +17,7 @@ class MockServerErrorResponse:
         self.status_code = 500
         self.text = "Internal Server Error"
 
-    def json(self):
-        return {}
+    def json(self): ...
 
 
 @pytest.fixture
