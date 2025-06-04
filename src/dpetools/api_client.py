@@ -57,8 +57,10 @@ class DPEApiClient:
         Returns:
             bool: True if the API is reachable, False otherwise.
         """
+        params = {'size': 0}
+        
         try:
-            response = requests.get(self.__api_endpoint, timeout=self.__timeout)
+            response = requests.get(self.__api_endpoint, timeout=self.__timeout, params=params)
             return response.status_code == SUCCESS_STATUS_CODE
         except requests.RequestException:
             return False
