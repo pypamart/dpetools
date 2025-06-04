@@ -33,3 +33,31 @@ markers = [
     "sad: marks tests as sad path",
     "wip: marks tests as work in progress"
 ]
+
+[tool.ruff.lint]
+select = [
+    # pycodestyle
+    "E",
+    # Pyflakes
+    "F",
+    # pyupgrade
+    "UP",
+    # flake8-bugbear
+    "B",
+    # flake8-simplify
+    "SIM",
+    # isort
+    "I",
+    # pylint
+    "PL",
+]
+ignore = [
+    # pycodestyle
+    "E501",  # line too long
+    # "E203",  # whitespace before ':'
+    # # Pyflakes
+    # "F401",  # unused import
+    # "F403",  # wildcard import
+    # # flake8-bugbear
+    "B007",  # use of assert in tests
+]
