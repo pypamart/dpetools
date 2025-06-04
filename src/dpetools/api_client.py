@@ -8,6 +8,7 @@ import requests
 
 from dpetools.exceptions import DPEApiClientException
 
+SUCCESS_STATUS_CODE = 200
 
 class DPEApiClient:
     """
@@ -32,7 +33,7 @@ class DPEApiClient:
         try:
             response = requests.get(self.__api_endpoint,  timeout=self.__timeout, params=params)
 
-            if response.status_code == 200:
+            if response.status_code == SUCCESS_STATUS_CODE:
                 data = response.json()
                 dpe_records_dataframe = pd.DataFrame(data["results"])
                 return dpe_records_dataframe
@@ -52,6 +53,6 @@ class DPEApiClient:
         """
         try:
             response = requests.get(self.__api_endpoint, timeout=self.__timeout)
-            return response.status_code == 200
+            return response.status_code == SUCCESS_STATUS_CODE
         except requests.RequestException:
             return False
