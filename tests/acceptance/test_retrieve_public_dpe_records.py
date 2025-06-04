@@ -53,22 +53,16 @@ def check_http_200(dpe_records_dataframe: pd.DataFrame):
 
 @then("the response should contain at least 1 record")
 def check_non_empty_response(dpe_records_dataframe: pd.DataFrame):
-    assert not dpe_records_dataframe.empty, (
-        "The response should contain at least one record"
-    )
+    assert not dpe_records_dataframe.empty, "The response should contain at least one record"
 
 
 @then(parsers.cfparse('each record should contain a non-empty field "{field}"'))
 def check_field_present(dpe_records_dataframe, field):
-    assert field in dpe_records_dataframe.columns, (
-        f"The field '{field}' should be present in the records"
-    )
-    assert not dpe_records_dataframe[field].isnull().all(), (
+    assert field in dpe_records_dataframe.columns, f"The field '{field}' should be present in the records"
+    assert not dpe_records_dataframe[field].isnull().all(), f"The field '{field}' should not be empty in all records"
+    assert not dpe_records_dataframe[field].apply(lambda x: str(x).strip() == "").all(), (
         f"The field '{field}' should not be empty in all records"
     )
-    assert (
-        not dpe_records_dataframe[field].apply(lambda x: str(x).strip() == "").all()
-    ), f"The field '{field}' should not be empty in all records"
 
 
 # Steps for Rule: Handle API unavailability
@@ -81,9 +75,7 @@ def api_unreachable(monkeypatch):
 
     monkeypatch.setattr(
         "requests.get",
-        lambda *args, **kwargs: (_ for _ in ()).throw(
-            requests.RequestException("API connectivity error")
-        ),
+        lambda *args, **kwargs: (_ for _ in ()).throw(requests.RequestException("API connectivity error")),
     )
 
 
@@ -111,6 +103,6 @@ def check_error_message(context: dict[str, str], keyword: str):
     # Accept if any of the keywords (split by ' or ') are present in the error message
     keywords = [keyword_item.strip('" ') for keyword_item in keyword.split("or")]
     error_msg = context["error"].lower()
-    assert any(
-        expected_keyword.lower() in error_msg for expected_keyword in keywords
-    ), f"Expected one of {keywords} in error message, got: {context['error']}"
+    assert any(expected_keyword.lower() in error_msg for expected_keyword in keywords), (
+        f"Expected one of {keywords} in error message, got: {context['error']}"
+    )
