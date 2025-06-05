@@ -19,10 +19,16 @@ Feature: Fetch DPE data with query parameters
       When I fetch DPE records without specifying a limit
       Then I should receive 50 records
     
-    @sad
-    Example: R1E3 - Use a negative limit
-    When I fetch DPE records with limit -5
+    @sad @edge
+    Scenario Outline: R1E3 - Use a negative limit
+    When I fetch DPE records with a non strict positive limit equals to <nbrecords>
     Then I should receive an error indicating the limit must be a positive integer
+
+    Examples:
+      | nbrecords |
+      | 0         |
+      | -1        |
+      | -10       |
 
   Rule: R2 - Sort records by a specific field
 
