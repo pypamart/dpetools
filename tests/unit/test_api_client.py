@@ -4,7 +4,7 @@ import requests
 
 from dpetools.api_client import NB_RECORDS_DEFAULT, DPEApiClient
 from dpetools.config.container import Container
-from dpetools.exceptions import DPEApiClientException
+from dpetools.exceptions import DPEApiClientException, InvalidDPERecordsLimitError
 
 
 class MockServerErrorResponse:
@@ -120,3 +120,14 @@ def test_should_return_dataframe_with_good_number_of_records(
         f"Expected {expected_count} records, but got {len(dpe_records_dataframe)}"
     )
     assert "numero_dpe" in dpe_records_dataframe.columns
+
+
+@pytest.mark.sad
+@pytest.mark.edge
+@pytest.mark.parametrize("nbrecords", [0, -1, -10])
+def test_should_raise_error_when_fetching_dpe_records_with_invalid_limit(dpe_api_client: DPEApiClient, nbrecords: int):
+    # Act & Assert
+    with pytest.raises(InvalidDPERecordsLimitError) as exc_info:
+        dpe_api_client.fetch_dpe_records(nbrecords=nbrecords)
+
+    assert str(exc_info.value) == f"The limit must be a positive integer >= 1, got {nbrecords}."

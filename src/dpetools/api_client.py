@@ -7,7 +7,7 @@ from typing import Any
 import pandas as pd
 import requests
 
-from dpetools.exceptions import DPEApiClientException
+from dpetools.exceptions import DPEApiClientException, InvalidDPERecordsLimitError
 
 SUCCESS_STATUS_CODE = 200
 NB_RECORDS_DEFAULT = 50
@@ -22,7 +22,7 @@ class DPEApiClient:
         self.__api_endpoint = api_data_url
         self.__timeout = timeout
 
-    def fetch_dpe_records(self, nbrecords: int | None = None) -> pd.DataFrame:
+    def fetch_dpe_records(self, nbrecords: int | None = None, **kwargs):
         """
         Fetch DPE records from the API endpoint.
 
@@ -35,7 +35,11 @@ class DPEApiClient:
 
         Raises:
             DPEApiClientException: If the API request fails or returns an error.
+            InvalidDPERecordsLimitError: If nbrecords is not a strict positive integer.
         """
+        if nbrecords is not None and nbrecords <= 0:
+            raise InvalidDPERecordsLimitError(nbrecords)
+
         params: dict[str, Any] = {"size": nbrecords if nbrecords is not None else NB_RECORDS_DEFAULT}
 
         try:
