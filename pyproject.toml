@@ -31,6 +31,7 @@ dev = [
 markers = [
     "happy: marks tests as happy path",
     "sad: marks tests as sad path",
+    "edge: marks tests as edge cases",
     "wip: marks tests as work in progress"
 ]
 
