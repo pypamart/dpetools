@@ -66,7 +66,7 @@
 
 ## Behavior-Driven Development (BDD) and Living Documentation
 - BDD is a collaborative approach that connects software development with business goals, supporting DDD's strategic design by making domain language explicit.
-- Example Mapping is recommended as a workshop technique to capture business rules, examples, and questions, which are then translated into Gherkin scenarios.
+- Example Mapping is recommended as a workshop technique to capture business rules, examples, and questions, which are then formulatec into Gherkin scenarios.
 - Gherkin feature files serve as living documentation, ensuring that business requirements, domain knowledge, and system behavior remain aligned and accessible to all stakeholders.
 - Living documentation is continuously updated and validated by automated acceptance tests, providing a single source of truth for both technical and non-technical team members. This fosters shared understanding, reduces ambiguity, and enables rapid adaptation to changing business needs.
 - This process helps teams clarify requirements, reduce ambiguity, and maintain a shared understanding of the domain as it evolves.
