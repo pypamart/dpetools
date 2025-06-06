@@ -113,7 +113,10 @@ def test_should_return_dataframe_with_good_number_of_records(
     dpe_api_client: DPEApiClient, nbrecords: int, expected_count: int
 ):
     # Act
-    dpe_records_dataframe = dpe_api_client.fetch_dpe_records(nbrecords=nbrecords)
+    if nbrecords is None:
+        dpe_records_dataframe = dpe_api_client.fetch_dpe_records()
+    else:
+        dpe_records_dataframe = dpe_api_client.fetch_dpe_records(nbrecords=nbrecords)
 
     # Assert
     assert len(dpe_records_dataframe) == expected_count, (
@@ -131,3 +134,68 @@ def test_should_raise_error_when_fetching_dpe_records_with_invalid_limit(dpe_api
         dpe_api_client.fetch_dpe_records(nbrecords=nbrecords)
 
     assert str(exc_info.value) == f"The limit must be a positive integer >= 1, got {nbrecords}."
+
+
+@pytest.mark.happy
+@pytest.mark.parametrize(
+    "sort_by, order",
+    [
+        (None, None),  # Default sorting (no specific field)
+        (None, "asc"),  # Default sorting order
+        (None, "desc"),  # Default sorting order
+        (None, "dummy_order"),  # Invalid order, should default to "asc"
+        ("date_etablissement_dpe", None),  # Default sorting order
+        ("date_etablissement_dpe", "asc"),  # Ascending order by establishment date
+        ("date_etablissement_dpe", "desc"),  # Descending order by establishment date
+        ("numero_dpe", "asc"),  # Ascending order by DPE number
+        ("numero_dpe", "desc"),  # Descending order by DPE number
+    ],
+)
+def test_should_return_sorted_dataframe_when_fetching_dpe_records(
+    dpe_api_client: DPEApiClient, sort_by: str, order: str
+):
+    """
+    Test that the DPE records are returned sorted by the specified field and order.
+
+    Args:
+        dpe_api_client (DPEApiClient): The API client to fetch records.
+        sort_by (str): The field by which to sort the records.
+        order (str): The order of sorting, either "asc" or "desc".
+    """
+    # Act
+    if order is None and sort_by is None:
+        dpe_records_dataframe = dpe_api_client.fetch_dpe_records(nbrecords=10)
+    elif order is None:
+        dpe_records_dataframe = dpe_api_client.fetch_dpe_records(sort_by=sort_by, nbrecords=10)
+    elif sort_by is None:
+        dpe_records_dataframe = dpe_api_client.fetch_dpe_records(order=order, nbrecords=10)
+    else:
+        dpe_records_dataframe = dpe_api_client.fetch_dpe_records(sort_by=sort_by, order=order, nbrecords=10)
+
+    # Assert
+    assert isinstance(dpe_records_dataframe, pd.DataFrame)
+    assert not dpe_records_dataframe.empty
+
+    # Check if the records are sorted by the specified field
+    if sort_by is None:
+        sort_by = "date_etablissement_dpe"
+
+    assert sort_by in dpe_records_dataframe.columns
+
+    if order == "desc":
+        assert dpe_records_dataframe[sort_by].is_monotonic_decreasing, (
+            f"The records are not ordered by '{sort_by}' in descending order."
+        )
+    else:
+        assert dpe_records_dataframe[sort_by].is_monotonic_increasing, (
+            f"The records are not ordered by '{sort_by}' in ascending order."
+        )
+
+
+@pytest.mark.sad
+def test_should_raise_error_when_fetching_dpe_records_with_invalid_sort_field(dpe_api_client: DPEApiClient):
+    # Act & Assert
+    with pytest.raises(InvalidDPERecordsLimitError) as exc_info:
+        dpe_api_client.fetch_dpe_records(nbrecords=10, sort_by="invalid_field")
+
+    assert "Bad request" in str(exc_info.value)

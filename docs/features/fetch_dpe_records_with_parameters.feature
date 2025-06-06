@@ -17,7 +17,7 @@ Feature: Fetch DPE data with query parameters
     @happy
     Example: R1E2 - Use the default number of records
       When I fetch DPE records without specifying a limit
-      Then I should receive 50 records
+      Then I should receive exactly 50 records
     
     @sad @edge
     Scenario Outline: R1E3 - Use a negative limit
@@ -44,7 +44,7 @@ Feature: Fetch DPE data with query parameters
 
     @sad
     Example: R2E3 - Sort by a non-existent field
-      When I fetch DPE records sorted by "not_a_field" in ascending order
+      When I fetch DPE records sorted by "not_a_field" that does not exists
       Then I should receive an error indicating the sort field is invalid
 
   Rule: R3 - Select specific columns
