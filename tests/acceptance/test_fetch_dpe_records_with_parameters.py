@@ -26,14 +26,6 @@ def dpe_api_client() -> DPEApiClient:
     return DPEApiClient()
 
 
-@pytest.fixture
-def context() -> dict[str, str]:
-    """
-    Fixture to provide a context dictionary for storing shared data between steps.
-    """
-    return {}
-
-
 #  ██████╗ ██╗██╗   ██╗███████╗███╗   ██╗    ███████╗████████╗███████╗██████╗ ███████╗
 # ██╔════╝ ██║██║   ██║██╔════╝████╗  ██║    ██╔════╝╚══██╔══╝██╔════╝██╔══██╗██╔════╝
 # ██║  ███╗██║██║   ██║█████╗  ██╔██╗ ██║    ███████╗   ██║   █████╗  ██████╔╝███████╗
@@ -97,9 +89,6 @@ def when_fetch_sorted_element(dpe_api_client: DPEApiClient, field: str, order: s
         field (str): The field by which to sort the records.
         order (str): The order of sorting, either "ascending" or "descending".
     """
-    if order not in ["ascending", "descending"]:
-        raise ValueError(f"Invalid order: {order}. Expected 'ascending' or 'descending'.")
-
     sort_order = "asc" if order == "ascending" else "desc"
     dpe_records_dataframe = dpe_api_client.fetch_dpe_records(sort_by=field, order=sort_order, nbrecords=10)
 
