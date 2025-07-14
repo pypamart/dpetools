@@ -1,4 +1,4 @@
-# GitHub Copilot Instructions
+# GitHub Copilot Instructions for ESG-Metrics-Products-Builder
 
 ## General Principles
 - Always follow Domain-Driven Design (DDD) principles: keep domain logic in the domain layer, and avoid leaking infrastructure or application details into the domain.
@@ -7,11 +7,11 @@
 - Use Behavior-Driven Development (BDD) for acceptance criteria and feature files. Step definitions should be clear and map directly to feature scenarios.
 
 ## Code Organization
-- Place domain models, value objects, and aggregates in `src/{package_name}/domain/models/`.
+- Place domain models, value objects, and aggregates in `src/esg_mp_builder/domain/models/`.
 - Place repositories, services, and interfaces in their respective domain or application subfolders.
-- Application services, use cases, and action orchestration go in `src/{package_name}/application/`.
-- Infrastructure code (adapters, persistence, readers, etc.) goes in `src/{package_name}/infrastructure/`.
-- Interface adapters (controllers, events, etc.) go in `src/{package_name}/interfaces/`.
+- Application services, use cases, and action orchestration go in `src/esg_mp_builder/application/`.
+- Infrastructure code (adapters, persistence, readers, etc.) goes in `src/esg_mp_builder/infrastructure/`.
+- Interface adapters (controllers, events, etc.) go in `src/esg_mp_builder/interfaces/`.
 - Tests are organized in `tests/acceptance/` for BDD/ATDD and `tests/unit/` for unit tests.
 
 ## Best Practices
@@ -66,7 +66,7 @@
 
 ## Behavior-Driven Development (BDD) and Living Documentation
 - BDD is a collaborative approach that connects software development with business goals, supporting DDD's strategic design by making domain language explicit.
-- Example Mapping is recommended as a workshop technique to capture business rules, examples, and questions, which are then formulatec into Gherkin scenarios.
+- Example Mapping is recommended as a workshop technique to capture business rules, examples, and questions, which are then formulated into Gherkin scenarios.
 - Gherkin feature files serve as living documentation, ensuring that business requirements, domain knowledge, and system behavior remain aligned and accessible to all stakeholders.
 - Living documentation is continuously updated and validated by automated acceptance tests, providing a single source of truth for both technical and non-technical team members. This fosters shared understanding, reduces ambiguity, and enables rapid adaptation to changing business needs.
 - This process helps teams clarify requirements, reduce ambiguity, and maintain a shared understanding of the domain as it evolves.
@@ -188,7 +188,45 @@ Follow this checklist to ensure new features are robust, maintainable, and align
 7. **Documentation & Code Style**
    - Add or update docstrings for all public classes and methods.
    - Ensure the feature and its scenarios are clearly documented in the Gherkin file.
-   - Use type hints for all function signatures, snake_case for functions/variables, PascalCase for classes, and keep lines under 120 characters.
+   - Use type hints for all function signatures, snake_case for functions/variables, PascalCase for classes, and keep lines under 180 characters.
 
 By following this checklist, you ensure that new features are well-designed, testable, and maintainable, and that they fit cleanly into the project's architecture and documentation standards.
 
+## Checklist extra items for creating a New Action
+
+When adding a new Action to this project, follow this checklist to ensure compliance with architecture and best practices:
+
+1. **Location & Naming**
+   - Place the new Action class in `src/esg_mp_builder/application/actions/plugins/`.
+   - The class must inherit from `IAction` (or a relevant abstract base Action class).
+   - Choose a unique and intention-revealing identifier string (e.g., `ACTION_IDENTIFIER`) for the Action. This identifier will be used for autodiscovery and instantiation by the ActionFactory.
+
+2. **Autodiscovery**
+   - Ensure the Action is discoverable by the plugin manager/factory (the identifier must be unique and registered if required).
+
+3. **Abstract Methods**
+   - Implement all required abstract methods from `IAction` (e.g., `get_action_identifier`, `get_parameter_specs`, `apply_on`, etc.).
+   - Add your business logic in the appropriate method bodies. You may use comments referencing similar or existing Actions for clarity.
+
+4. **Dependency Injection**
+   - All infrastructure dependencies (e.g., readers, repositories, external services) must be injected via the constructor or a dedicated injection method.
+   - Do **not** instantiate infrastructure classes directly inside the Action.
+   - Use interfaces/abstract base classes for all injected dependencies.
+
+5. **DTO Communication**
+   - All communication with the infrastructure layer must be done via Data Transfer Objects (DTOs). Do not pass raw models or domain objects across the boundary.
+   - Use or create DTOs in `src/esg_mp_builder/application/dto/` as needed.
+
+6. **Testing**
+   - Write or update unit tests for the new Action in `tests/unit/application/actions/`.
+   - If the Action is part of a business workflow, add or update acceptance tests in `tests/acceptance/` and feature files in `docs/features/`.
+   - Use mocks/stubs for infrastructure dependencies in unit tests.
+
+7. **Documentation**
+   - Add docstrings to all public classes and methods.
+   - Document the Action's identifier, expected parameters, and injected dependencies.
+
+8. **Formatting & Style**
+   - Use type hints for all function signatures.
+   - Use snake_case for functions and variables, PascalCase for classes.
+   - Keep lines under 180 characters.
