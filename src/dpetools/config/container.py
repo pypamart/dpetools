@@ -8,6 +8,7 @@ class Container:
     A class to represent a container for configuration settings and dependencies injection.
     """
 
-    api_data_url: str = "https://data.ademe.fr/data-fair/api/v1/datasets/dpe03existant/lines"
+    API_DATA_URL: str = "https://data.ademe.fr/data-fair/api/v1/datasets/dpe03existant/lines"
+    API_SCHEMA_URL: str = "https://data.ademe.fr/data-fair/api/v1/datasets/dpe03existant/schema"
 
-    requests_timeout: int = 10
+    REQUESTS_TIMEOUT: int = 10
