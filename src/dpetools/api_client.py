@@ -7,13 +7,8 @@ from typing import Any
 import pandas as pd
 import requests
 
+from dpetools.config.container import Container
 from dpetools.exceptions import DPEApiClientException, InvalidDPERecordsLimitError, NonExistingColumnError
-
-SUCCESS_STATUS_CODE = 200
-BAD_REQUEST_STATUS_CODE = 400
-NB_RECORDS_DEFAULT = 50
-SORT_BY_DEFAULT = "date_etablissement_dpe"
-ORDER_DEFAULT = "desc"
 
 
 class DPEApiClient:
@@ -21,7 +16,12 @@ class DPEApiClient:
     Client for fetching DPE records from the ADEME API.
     """
 
-    def __init__(self, api_data_url: str, api_schema_url: str, timeout: int = 10):
+    def __init__(
+        self,
+        api_data_url: str = Container.API_DATA_URL,
+        api_schema_url: str = Container.API_SCHEMA_URL,
+        timeout: int = Container.REQUESTS_TIMEOUT,
+    ):
         """
         Initialize the DPEApiClient with the API endpoint and timeout.
 
@@ -38,17 +38,17 @@ class DPEApiClient:
     def fetch_dpe_records(
         self,
         select_columns: list[str] | None = None,
-        sort_by: str = SORT_BY_DEFAULT,
-        nbrecords: int = NB_RECORDS_DEFAULT,
-        order: str = "asc",
+        sort_by: str = Container.SORT_BY_DEFAULT,
+        nbrecords: int = Container.NB_RECORDS_DEFAULT,
+        order: str = Container.ORDER_DEFAULT,
     ) -> pd.DataFrame:
         """
         Fetch DPE records from the API endpoint.
 
         Args:
             select_columns (list[str] | None): List of columns to select from the DataFrame. If None, all columns are returned.
-            sort_by (str): The field by which to sort the records. Defaults to SORT_BY_DEFAULT.
-            nbrecords (int): The maximum number of records to fetch. Defaults to NB_RECORDS_DEFAULT.
+            sort_by (str): The field by which to sort the records. Defaults to Container.SORT_BY_DEFAULT.
+            nbrecords (int): The maximum number of records to fetch. Defaults to Container.NB_RECORDS_DEFAULT.
             order (str): The order of sorting, either "asc" or "desc", for "ascending" and "descending". Defaults to "asc". If not "asc" or "desc", it will be ignored and set to "asc".
 
         Returns:
@@ -65,11 +65,11 @@ class DPEApiClient:
         try:
             response = requests.get(self.__api_endpoint, timeout=self.__timeout, params=params)
 
-            if response.status_code == SUCCESS_STATUS_CODE:
+            if response.status_code == Container.SUCCESS_STATUS_CODE:
                 data = response.json()
                 dpe_records_dataframe = pd.DataFrame(data["results"])
                 return dpe_records_dataframe
-            elif response.status_code == BAD_REQUEST_STATUS_CODE:
+            elif response.status_code == Container.BAD_REQUEST_STATUS_CODE:
                 raise DPEApiClientException(f"Bad request: {response.status_code} - {response.text}")
             else:
                 raise DPEApiClientException(f"Failed to fetch data: {response.status_code} - {response.text}")
@@ -87,8 +87,8 @@ class DPEApiClient:
         Prepare the parameters for the API request.
         Args:
             select_columns (list[str] | None): List of columns to select from the DataFrame. If None, all columns are returned.
-            sort_by (str): The field by which to sort the records. Defaults to SORT_BY_DEFAULT.
-            nbrecords (int): The maximum number of records to fetch. Defaults to NB_RECORDS_DEFAULT.
+            sort_by (str): The field by which to sort the records. Defaults to Container.SORT_BY_DEFAULT.
+            nbrecords (int): The maximum number of records to fetch. Defaults to Container.NB_RECORDS_DEFAULT.
             order (str): The order of sorting, either "asc" or "desc". Defaults to "asc".
         Returns:
             dict[str, Any]: A dictionary of parameters to be used in the API request.
@@ -101,7 +101,7 @@ class DPEApiClient:
 
         params: dict[str, Any] = {"sort": f"{'-' if order == 'desc' else ''}{sort_by}", "size": nbrecords}
 
-        if select_columns is None and sort_by == SORT_BY_DEFAULT:
+        if select_columns is None and sort_by == Container.SORT_BY_DEFAULT:
             return params
 
         available_columns = self.available_columns()
@@ -112,7 +112,7 @@ class DPEApiClient:
             else:
                 raise NonExistingColumnError(select_columns, available_columns)
 
-        if sort_by != SORT_BY_DEFAULT:
+        if sort_by != Container.SORT_BY_DEFAULT:
             if sort_by in available_columns:
                 params["sort"] = f"{'-' if order == 'desc' else ''}{sort_by}"
             else:
@@ -131,7 +131,7 @@ class DPEApiClient:
 
         try:
             response = requests.get(self.__api_endpoint, timeout=self.__timeout, params=params)
-            return response.status_code == SUCCESS_STATUS_CODE
+            return response.status_code == Container.SUCCESS_STATUS_CODE
         except requests.RequestException:
             return False
 
@@ -145,7 +145,7 @@ class DPEApiClient:
         if self.__available_columns is None:
             schema = requests.get(self.__api_schema_endpoint, timeout=self.__timeout)
 
-            if schema.status_code == SUCCESS_STATUS_CODE:
+            if schema.status_code == Container.SUCCESS_STATUS_CODE:
                 schema_data = schema.json()
                 self.__available_columns = [column["key"] for column in schema_data]
             else:

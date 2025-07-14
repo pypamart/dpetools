@@ -5,7 +5,6 @@ import pytest
 from pytest_bdd import given, parsers, scenarios, then, when
 
 from dpetools.api_client import DPEApiClient
-from dpetools.config.container import Container
 from dpetools.exceptions import InvalidDPERecordsLimitError, NonExistingColumnError
 
 # Link the .feature file
@@ -24,9 +23,7 @@ def dpe_api_client() -> DPEApiClient:
     """
     Fixture to create a DPEAPIClient instance for testing.
     """
-    api_data_url = Container.API_DATA_URL
-    api_schema_url = Container.API_SCHEMA_URL
-    return DPEApiClient(api_data_url=api_data_url, api_schema_url=api_schema_url, timeout=Container.REQUESTS_TIMEOUT)
+    return DPEApiClient()
 
 
 @pytest.fixture

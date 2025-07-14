@@ -4,13 +4,9 @@ import pandas as pd
 import pytest
 import requests
 
-from dpetools.api_client import NB_RECORDS_DEFAULT, DPEApiClient
+from dpetools.api_client import DPEApiClient
 from dpetools.config.container import Container
 from dpetools.exceptions import DPEApiClientException, InvalidDPERecordsLimitError, NonExistingColumnError
-
-SUCCESS_STATUS_CODE = 200
-BAD_REQUEST_STATUS_CODE = 400
-INTERNAL_SERVER_ERROR_STATUS_CODE = 500
 
 
 class MockServerErrorResponse:
@@ -31,8 +27,7 @@ def dpe_api_client():
     """
     Fixture to create a DPEAPIClient instance for testing.
     """
-    api_data_url = Container.API_DATA_URL
-    return DPEApiClient(api_data_url=api_data_url, api_schema_url=Container.API_SCHEMA_URL)
+    return DPEApiClient()
 
 
 @pytest.mark.happy
@@ -108,7 +103,7 @@ def test_should_raise_timeout_error_when_api_request_times_out(dpe_api_client: D
 @pytest.mark.parametrize(
     "nbrecords, expected_count",
     [
-        (None, NB_RECORDS_DEFAULT),  # Default limit
+        (None, Container.NB_RECORDS_DEFAULT),  # Default limit
         (1, 1),
         (10, 10),
         (100, 100),
@@ -209,7 +204,7 @@ def test_should_return_available_columns(mock_get: MagicMock, dpe_api_client: DP
     """
     # Arrange
     mock_response = MagicMock()
-    mock_response.status_code = SUCCESS_STATUS_CODE
+    mock_response.status_code = Container.SUCCESS_STATUS_CODE
     mock_response.json.return_value = [{"key": "col1", "type": "string"}, {"key": "col2", "type": "int"}]
     mock_get.return_value = mock_response
 
@@ -234,7 +229,7 @@ def test_should_cache_available_columns_result(mock_get: MagicMock, dpe_api_clie
     """
     # Arrange
     mock_response = MagicMock()
-    mock_response.status_code = SUCCESS_STATUS_CODE
+    mock_response.status_code = Container.SUCCESS_STATUS_CODE
     mock_response.json.return_value = [{"key": "col1", "type": "string"}]
     mock_get.return_value = mock_response
 
@@ -259,7 +254,7 @@ def test_available_columns_api_error_raises(mock_get: MagicMock, dpe_api_client:
     """
     # Arrange
     mock_response = MagicMock()
-    mock_response.status_code = INTERNAL_SERVER_ERROR_STATUS_CODE
+    mock_response.status_code = Container.INTERNAL_SERVER_ERROR_STATUS_CODE
     mock_response.text = "Internal Server Error"
     mock_get.return_value = mock_response
 
@@ -284,7 +279,7 @@ def test_should_return_dataframe_with_selected_columns(mock_get: MagicMock, dpe_
     # Arrange
     # First call: schema endpoint
     mock_schema_response = MagicMock()
-    mock_schema_response.status_code = SUCCESS_STATUS_CODE
+    mock_schema_response.status_code = Container.SUCCESS_STATUS_CODE
     mock_schema_response.json.return_value = [
         {"key": "col1", "type": "string"},
         {"key": "col2", "type": "int"},
@@ -292,7 +287,7 @@ def test_should_return_dataframe_with_selected_columns(mock_get: MagicMock, dpe_
     ]
     # Second call: data endpoint
     mock_data_response = MagicMock()
-    mock_data_response.status_code = SUCCESS_STATUS_CODE
+    mock_data_response.status_code = Container.SUCCESS_STATUS_CODE
     mock_data_response.json.return_value = {"results": [{"col1": "a", "col2": 1}, {"col1": "b", "col2": 2}]}
     mock_get.side_effect = [mock_schema_response, mock_data_response]
 
@@ -316,7 +311,7 @@ def test_should_raise_error_when_selecting_nonexistent_column(mock_get: MagicMoc
     """
     # Arrange
     mock_response = MagicMock()
-    mock_response.status_code = SUCCESS_STATUS_CODE
+    mock_response.status_code = Container.SUCCESS_STATUS_CODE
     mock_response.json.return_value = [
         {"key": "col1", "type": "string"},
         {"key": "col2", "type": "int"},
@@ -345,7 +340,7 @@ def test_should_return_all_columns_when_select_columns_is_none(mock_get: MagicMo
     """
     # Arrange
     mock_response = MagicMock()
-    mock_response.status_code = SUCCESS_STATUS_CODE
+    mock_response.status_code = Container.SUCCESS_STATUS_CODE
     mock_response.json.return_value = {
         "schema": [
             {"key": "col1", "type": "string"},
@@ -375,7 +370,7 @@ def test_should_raise_error_when_sort_by_nonexistent_field(mock_get: MagicMock, 
     """
     # Arrange
     mock_response = MagicMock()
-    mock_response.status_code = SUCCESS_STATUS_CODE
+    mock_response.status_code = Container.SUCCESS_STATUS_CODE
     mock_response.json.return_value = [
         {"key": "col1", "type": "string"},
         {"key": "col2", "type": "int"},

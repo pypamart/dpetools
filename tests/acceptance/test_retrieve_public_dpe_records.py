@@ -22,9 +22,7 @@ def dpe_api_client():
     """
     Fixture to create a DPEAPIClient instance for testing.
     """
-    api_data_url = Container.API_DATA_URL
-    api_schema_url = Container.API_SCHEMA_URL
-    return DPEApiClient(api_data_url=api_data_url, api_schema_url=api_schema_url)
+    return DPEApiClient()
 
 
 @pytest.fixture
