@@ -114,9 +114,9 @@ def when_fetch_sorted_by_invalid_field(dpe_api_client: DPEApiClient, field: str)
 
 @when(
     parsers.parse('I fetch DPE records selecting columns "{col_name_1}" and "{col_name_2}"'),
-    target_fixture="dpe_records_dataframe",
+    target_fixture="run_info",
 )
-def when_fetch_selecting_columns(dpe_api_client: DPEApiClient, col_name_1: str, col_name_2: str) -> pd.DataFrame:
+def when_fetch_selecting_columns(dpe_api_client: DPEApiClient, col_name_1: str, col_name_2: str) -> dict[str, Any]:
     """
     Fetch DPE records selecting specific columns.
 
@@ -126,9 +126,46 @@ def when_fetch_selecting_columns(dpe_api_client: DPEApiClient, col_name_1: str, 
         col_name_2 (str): The second column to select.
 
     Returns:
-        pd.DataFrame: A DataFrame containing the selected columns from the DPE records.
+        dict[str, Any]: A dictionary containing the DataFrame and any exception information and the selected column names.
+        If an exception occurs, the DataFrame will be None and the exception information will be captured
     """
-    return dpe_api_client.fetch_dpe_records(select_columns=[col_name_1, col_name_2])
+    try:
+        dpe_records_dataframe = dpe_api_client.fetch_dpe_records(select_columns=[col_name_1, col_name_2])
+        exception_info = None
+    except NonExistingColumnError as excinfo:
+        dpe_records_dataframe = None
+        exception_info = excinfo
+        
+    return {"dataframe": dpe_records_dataframe, "exc_info": exception_info, "col_names": [col_name_1, col_name_2]}
+
+@when("I fetch DPE records without specifying columns to select", target_fixture="dpe_records_dataframe")
+def when_fetch_all_columns(dpe_api_client: DPEApiClient) -> pd.DataFrame:
+    """
+    Fetch all DPE records without specifying any columns to select.
+    This will return all available columns in the DataFrame.
+    
+    Args:
+        dpe_api_client (DPEApiClient): The API client to fetch records.
+    """
+    return dpe_api_client.fetch_dpe_records(select_columns=None)
+
+# when I fetch DPE records filtering where "code_insee_ban" is "77014" and "etiquette_dpe" is "B"
+@when(parsers.parse('I fetch DPE records filtering where "{field_1}" is "{value_2}" and "{field_2}" is "{value_2}"'), target_fixture="dpe_records_dataframe")
+def when_fetch_filtered_records(dpe_api_client: DPEApiClient, field_1: str, value_1: str, field_2: str, value_2: str) -> pd.DataFrame:
+    """
+    Fetch DPE records filtered by specific field values.
+
+    Args:
+        dpe_api_client (DPEApiClient): The API client to fetch records.
+        field_1 (str): The first field to filter by.
+        value_1 (str): The value for the first field.
+        field_2 (str): The second field to filter by.
+        value_2 (str): The value for the second field.
+
+    Returns:
+        pd.DataFrame: A DataFrame containing the filtered DPE records.
+    """
+    return dpe_api_client.fetch_dpe_records(params=params)
 
 
 # ████████╗██╗  ██╗███████╗███╗   ██╗    ███████╗████████╗███████╗██████╗ ███████╗
@@ -198,9 +235,6 @@ def then_error_sort_field_invalid(fetch_error: dict[str, Any]) -> None:
     Args:
         fetch_error (pytest.ExceptionInfo): The exception information captured during the fetch attempt.
     """
-    # assert "Bad request" in str(fetch_error.value), (
-    #     f"Expected error message to contain 'sort field is invalid', but got: {fetch_error.value}"
-    # )
     error: pytest.ExceptionInfo = fetch_error["exc_info"]
     field_name = fetch_error["field"]
 
@@ -210,77 +244,51 @@ def then_error_sort_field_invalid(fetch_error: dict[str, Any]) -> None:
 
 
 @then(parsers.parse('each returned record contains only the fields "{col_name_1}" and "{col_name_2}"'))
-def then_only_selected_fields(dpe_records_dataframe: pd.DataFrame, col_name_1: str, col_name_2: str) -> None:
+def then_only_selected_fields(col_name_1: str, col_name_2: str, run_info: dict[str, Any]) -> None:
     """
     Assert that each record in the DataFrame contains only the specified fields.
 
     Args:
-        dpe_records_dataframe (pd.DataFrame): The DataFrame containing the fetched DPE records.
+        run_info (dict[str, Any]): The dictionary containing the DataFrame and any exception information.
         col_name_1 (str): The first column to check.
         col_name_2 (str): The second column to check.
     """
     expected_columns = [col_name_1, col_name_2]
-    actual_columns = list(dpe_records_dataframe.columns)
+    actual_columns = list(run_info["dataframe"].columns)
 
     assert set(expected_columns) - set(actual_columns) == set(), (
         f"Expected columns {expected_columns} not found in the DataFrame. Actual columns: {actual_columns}."
     )
 
+@then("each returned record contains all available fields")
+def then_all_fields_present(dpe_records_dataframe: pd.DataFrame, dpe_api_client: DPEApiClient) -> None:
+    """
+    Assert that each record in the DataFrame contains all available fields.
 
-# @when("I fetch DPE records without specifying columns to select")
-# def when_fetch_all_columns(_=None): ...
+    Args:
+        dpe_records_dataframe (pd.DataFrame): The DataFrame containing the fetched DPE records.
+        dpe_api_client (DPEApiClient): The API client to fetch available columns.
+    """
+    actual_columns = list(dpe_records_dataframe.columns)
 
+    assert len(actual_columns) > 0, "The DataFrame should not be empty."
 
-# @then(parsers.parse('each record should only contain the fields "{col1}" and "{col2}"'))
-# def then_only_selected_fields(_=None):
-#     raise AssertionError()
+@then("an error is returned indicating the selected columns are invalid")
+def then_error_selected_columns_invalid(run_info: dict[str, Any]) -> None:
+    """
+    Assert that the error message indicates the sort field is invalid.
 
+    Args:
+        run_info (dict[str, Any]): The dictionary containing the DataFrame and any exception information and the selected column names.
+    """
+    error: pytest.ExceptionInfo = run_info["exc_info"]
+    field_name = run_info["col_names"][1]
 
-# @then("each record should contain all available fields")
-# def then_all_fields_present(_=None):
-#     raise AssertionError()
+    assert isinstance(error, NonExistingColumnError), (
+        f"Expected NonExistingColumnError, but got {type(error.value)}: {error}"
+    )
 
+    assert str(error).startswith(
+        f"The requested column(s) ['{field_name}'] do not exist in the available columns:"
+    ), f"Expected error message to indicate non-existing columns, but got: {error}"
 
-# @when(parsers.parse('I fetch DPE records filtering where "{field1}" is "{value1}" and "{field2}" is "{value2}"'))
-# def when_fetch_with_filters(_=None): ...
-
-
-# @then(parsers.parse('all returned records should have "{field}" equal to "{value}"'))
-# def then_all_records_have_field_value(_=None):
-#     raise AssertionError()
-
-
-# @when(parsers.parse('I fetch DPE records searching for "{search_term}" in fields "{field1}" and "{field2}"'))
-# def when_fetch_full_text_search(_=None): ...
-
-
-# @then(parsers.parse('all returned records should contain "{search_term}" in either "{field1}" or "{field2}"'))
-# def then_all_records_contain_search_term(_=None):
-#     raise AssertionError()
-
-
-# @when(parsers.parse('I fetch DPE records sorted by "{field}" in ascending order'))
-# def when_fetch_sorted_by_invalid_field(_=None): ...
-
-
-# @then("I should receive an error indicating the sort field is invalid")
-# def then_error_sort_field_invalid(_=None):
-#     raise AssertionError()
-
-
-# @when(parsers.parse('I fetch DPE records selecting columns "{col1}" and "{col2}"'))
-# def when_fetch_selecting_invalid_columns(_=None): ...
-
-
-# @then("I should receive an error indicating one or more selected columns are invalid")
-# def then_error_selected_columns_invalid(_=None):
-#     raise AssertionError()
-
-
-# @when(parsers.parse('I fetch DPE records filtering where "{field}" is "{value}"'))
-# def when_fetch_with_invalid_filter(_=None): ...
-
-
-# # @then("I should receive an error indicating the filter field is invalid")
-# # def then_error_filter_field_invalid(_=None):
-# #     raise AssertionError()
