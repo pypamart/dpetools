@@ -69,9 +69,9 @@ Feature: Fetch DPE records with advanced query parameters
 
     @happy
     Example: R4E1 - Filter records by 'code_insee_ban' and 'etiquette_dpe'
-      When I fetch DPE records filtering where "code_insee_ban" is "77014" and "etiquette_dpe" is "B"
+      When I fetch DPE records filtering where "code_insee_ban" is "77014" and "etiquette_dpe" is "D"
       Then all returned records have "code_insee_ban" equal to "77014"
-      And all returned records have "etiquette_dpe" equal to "B"
+      And all returned records have "etiquette_dpe" equal to "D"
 
     @sad
     Example: R4E2 - Filter by an invalid field
