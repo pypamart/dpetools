@@ -149,8 +149,7 @@ def when_fetch_all_columns(dpe_api_client: DPEApiClient) -> pd.DataFrame:
     """
     return dpe_api_client.fetch_dpe_records(select_columns=None)
 
-# when I fetch DPE records filtering where "code_insee_ban" is "77014" and "etiquette_dpe" is "B"
-@when(parsers.parse('I fetch DPE records filtering where "{field_1}" is "{value_2}" and "{field_2}" is "{value_2}"'), target_fixture="dpe_records_dataframe")
+@when(parsers.parse('I fetch DPE records filtering where "{field_1}" is "{value_1}" and "{field_2}" is "{value_2}"'), target_fixture="dpe_records_dataframe")
 def when_fetch_filtered_records(dpe_api_client: DPEApiClient, field_1: str, value_1: str, field_2: str, value_2: str) -> pd.DataFrame:
     """
     Fetch DPE records filtered by specific field values.
@@ -165,7 +164,8 @@ def when_fetch_filtered_records(dpe_api_client: DPEApiClient, field_1: str, valu
     Returns:
         pd.DataFrame: A DataFrame containing the filtered DPE records.
     """
-    return dpe_api_client.fetch_dpe_records(params=params)
+    filter_with = {field_1: value_1, field_2: value_2}
+    return dpe_api_client.fetch_dpe_records(filter_with=filter_with)
 
 
 # ████████╗██╗  ██╗███████╗███╗   ██╗    ███████╗████████╗███████╗██████╗ ███████╗
@@ -292,3 +292,19 @@ def then_error_selected_columns_invalid(run_info: dict[str, Any]) -> None:
         f"The requested column(s) ['{field_name}'] do not exist in the available columns:"
     ), f"Expected error message to indicate non-existing columns, but got: {error}"
 
+
+# Then all returned records have "code_insee_ban" equal to "77014"
+# And all returned records have "etiquette_dpe" equal to "B"
+@then(parsers.parse('all returned records have "{field}" equal to "{value}"'))
+def then_all_records_have_field_value(dpe_records_dataframe: pd.DataFrame, field: str, value: str) -> None:
+    """
+    Assert that all returned records have a specific field equal to a given value.
+
+    Args:
+        dpe_records_dataframe (pd.DataFrame): The DataFrame containing the fetched DPE records.
+        field (str): The field to check.
+        value (str): The expected value for the field.
+    """
+    assert all(dpe_records_dataframe[field] == value), (
+        f"Not all records have '{field}' equal to '{value}'."
+    )

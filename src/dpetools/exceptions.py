@@ -21,3 +21,11 @@ class NonExistingColumnError(Exception):
         super().__init__(
             f"The requested column(s) {list(non_existing_columns)} do not exist in the available columns: {available_columns}."
         )
+
+class InvalidParameterError(Exception):
+    """
+    Exception raised for invalid parameters in the DPE API client.
+    """
+
+    def __init__(self, message: str):
+        super().__init__(message)

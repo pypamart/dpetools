@@ -109,6 +109,13 @@ def test_should_raise_timeout_error_when_api_request_times_out(dpe_api_client: D
         (100, 100),
         (1000, 1000),
     ],
+    ids=[
+        "Default limit",
+        "Limit 1",
+        "Limit 10",
+        "Limit 100",
+        "Limit 1000",
+    ],
 )
 def test_should_return_dataframe_with_good_number_of_records(
     dpe_api_client: DPEApiClient, nbrecords: int, expected_count: int
@@ -150,6 +157,17 @@ def test_should_raise_error_when_fetching_dpe_records_with_invalid_limit(dpe_api
         ("date_etablissement_dpe", "desc"),  # Descending order by establishment date
         ("numero_dpe", "asc"),  # Ascending order by DPE number
         ("numero_dpe", "desc"),  # Descending order by DPE number
+    ],
+    ids=[
+        "Default sorting",
+        "Default order ascending",
+        "Default order descending",
+        "Invalid order, should default to asc",
+        "Sort by establishment date, default order",
+        "Sort by establishment date, ascending",
+        "Sort by establishment date, descending",
+        "Sort by DPE number, ascending",
+        "Sort by DPE number, descending",
     ],
 )
 def test_should_return_sorted_dataframe_when_fetching_dpe_records(
@@ -385,3 +403,47 @@ def test_should_raise_error_when_sort_by_nonexistent_field(mock_get: MagicMock, 
         str(exc_info.value)
         == "The requested column(s) ['unexisting_column'] do not exist in the available columns: ['col1', 'col2']."
     ), f"Expected error message to indicate non-existing columns, but got: {exc_info.value}"
+
+
+@pytest.mark.happy
+@patch("dpetools.api_client.requests.get")
+@pytest.mark.parametrize(
+    "filter_with, expected_params",
+    [
+        (None, {"sort": "-date_etablissement_dpe", "size": Container.NB_RECORDS_DEFAULT}),
+        ({"code_insee_ban": 77210}, {"sort": "-date_etablissement_dpe", "size": Container.NB_RECORDS_DEFAULT, "q_fields": "code_insee_ban", "q": '{"code_insee_ban":"77210"}'}),
+        ({"etiquette_ges": "C"}, {"sort": "-date_etablissement_dpe", "size": Container.NB_RECORDS_DEFAULT, "q_fields": "etiquette_ges", "q": '{"etiquette_ges":"C"}'}),
+        ({"code_insee_ban": 77210, "etiquette_ges": "C"}, {"sort": "-date_etablissement_dpe", "size": Container.NB_RECORDS_DEFAULT, "q_fields": "code_insee_ban,etiquette_ges", "q": '{"code_insee_ban":"77210","etiquette_ges":"C"}'}),
+    ],
+    ids=[
+        "No filters",
+        "Single filter - code_insee_ban",
+        "Single filter - etiquette_ges",
+        "Multiple filters - code_insee_ban and etiquette_ges",
+    ],
+)
+def test_should_prepare_params_with_filters(
+    mock_get: MagicMock, dpe_api_client: DPEApiClient, filter_with: dict[str, str] | None, expected_params: dict[str, str]
+):
+    """
+    Intercept the payload of the API request to ensure that the parameters are correctly prepared with filters.
+    
+    Args:
+        mock_get (MagicMock): Mock for the requests.get method.
+        dpe_api_client (DPEApiClient): The API client to fetch records.
+        filter_with (dict[str, str] | None): The filters to apply to the records.
+        expected_params (dict[str, Any]): The expected parameters for the API request.
+    """
+    # Arrange
+    mock_response = MagicMock()
+    mock_response.status_code = Container.SUCCESS_STATUS_CODE
+    mock_response.json.return_value = {"results": []}
+    mock_get.return_value = mock_response
+
+    # Act
+    dpe_api_client.fetch_dpe_records(filter_with=filter_with)
+
+    # Assert
+    mock_get.assert_called_once()
+    actual_params = mock_get.call_args[1]["params"]    
+    assert actual_params == expected_params, f"Expected params {expected_params}, but got {actual_params}"

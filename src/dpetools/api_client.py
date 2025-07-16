@@ -8,7 +8,7 @@ import pandas as pd
 import requests
 
 from dpetools.config.container import Container
-from dpetools.exceptions import DPEApiClientException, InvalidDPERecordsLimitError, NonExistingColumnError
+from dpetools.exceptions import DPEApiClientException, InvalidDPERecordsLimitError, NonExistingColumnError, InvalidParameterError
 
 
 class DPEApiClient:
@@ -41,6 +41,7 @@ class DPEApiClient:
         sort_by: str = Container.SORT_BY_DEFAULT,
         nbrecords: int = Container.NB_RECORDS_DEFAULT,
         order: str = Container.ORDER_DEFAULT,
+        filter_with: dict[str, str] | None = None,
     ) -> pd.DataFrame:
         """
         Fetch DPE records from the API endpoint.
@@ -50,6 +51,7 @@ class DPEApiClient:
             sort_by (str): The field by which to sort the records. Defaults to Container.SORT_BY_DEFAULT.
             nbrecords (int): The maximum number of records to fetch. Defaults to Container.NB_RECORDS_DEFAULT.
             order (str): The order of sorting, either "asc" or "desc", for "ascending" and "descending". Defaults to "asc". If not "asc" or "desc", it will be ignored and set to "asc".
+            filter_with (dict[str, str] | None): A dictionary of filters to apply to the records. If None, no filters are applied.
 
         Returns:
             pd.DataFrame: A DataFrame containing the DPE records.
@@ -59,8 +61,8 @@ class DPEApiClient:
 
         Raises:
             DPEApiClientException: If the API request fails or returns an error.
-        """
-        params = self.__prepare_params(select_columns, sort_by, nbrecords, order)
+        """        
+        params = self.__prepare_params(select_columns, sort_by, nbrecords, order, filter_with)
 
         try:
             response = requests.get(self.__api_endpoint, timeout=self.__timeout, params=params)
@@ -82,6 +84,7 @@ class DPEApiClient:
         sort_by: str,
         nbrecords: int,
         order: str,
+        filter_with: dict[str, str] | None = None,
     ) -> dict[str, Any]:
         """
         Prepare the parameters for the API request.
@@ -90,17 +93,27 @@ class DPEApiClient:
             sort_by (str): The field by which to sort the records. Defaults to Container.SORT_BY_DEFAULT.
             nbrecords (int): The maximum number of records to fetch. Defaults to Container.NB_RECORDS_DEFAULT.
             order (str): The order of sorting, either "asc" or "desc". Defaults to "asc".
+            filter_with (dict[str, str] | None): A dictionary of filters to apply to the records. If None, no filters are applied.
         Returns:
             dict[str, Any]: A dictionary of parameters to be used in the API request.
         Raises:
             InvalidDPERecordsLimitError: If nbrecords is not a strict positive integer.
             NonExistingColumnError: If select_columns contains columns that do not exist in the available columns.
+            InvalidParameterError: If filter_with is not a dictionary.
         """
         if nbrecords is not None and nbrecords <= 0 or not isinstance(nbrecords, int):
             raise InvalidDPERecordsLimitError(nbrecords)
 
         params: dict[str, Any] = {"sort": f"{'-' if order == 'desc' else ''}{sort_by}", "size": nbrecords}
 
+        if filter_with:
+            if not isinstance(filter_with, dict):
+                raise InvalidParameterError("Filter must be a dictionary of field-value pairs to filter by.")
+            
+            sorted_keys = sorted(filter_with.keys())
+            params["q"] = "{" + ", ".join([f'"{key}":"{filter_with[key]}"' for key in sorted_keys]) + "}"
+            params["q_fields"] = ",".join(sorted_keys)
+            
         if select_columns is None and sort_by == Container.SORT_BY_DEFAULT:
             return params
 
